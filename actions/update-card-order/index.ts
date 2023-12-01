@@ -18,25 +18,28 @@ const handler = async (data: InputType): Promise<ReturnType> =>{
         }
     }
 
-    const { items, listId } = data
+    const { items, boardId } = data
     let updatedCards
 
     try {
-        const transaction = items.map((list) => 
-        db.list.update({
+        const transaction = items.map((card) => 
+        db.card.update({
             where: {
-                id: list.id,
-                board: {
-                    orgId,
+                id: card.id,
+                list: {
+                    board: {
+                        orgId,
+                    },
                 },
             },
             data: {
-                order: list.order,
+                order: card.order,
+                listId: card.listId,
             },
-        }),
+        })
         )
 
-        lists = await db.$transaction(transaction)
+        updatedCards = await db.$transaction(transaction)
     } catch (error) {
         return {
             error: "Failed to reorder."
@@ -44,7 +47,7 @@ const handler = async (data: InputType): Promise<ReturnType> =>{
     }
 
     revalidatePath(`/board/${boardId}`)
-    return { data: lists }
+    return { data: updatedCards }
 }
 
 export const updateCardOrder = createSafeAction(UpdateCardOrder, handler)
